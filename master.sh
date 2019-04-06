@@ -1,16 +1,26 @@
 #!/bin/bash
+set -e
+set -x
+
+useradd kube
+mkdir /home/kube/.ssh/
+cp /vagrant/id_rsa /home/kube/.ssh/
+cat /vagrant/id_rsa.pub > /home/kube/.ssh/authorized_keys
+chmod 600 /home/kube/.ssh/id_rsa
+chown -R kube:kube /home/kube/
 yum install -y vim
-cat <<EOF >> /etc/hosts
-10.0.15.21       kube01
-10.0.15.22       kube02
-10.0.15.10       master
-EOF
+
+ip=$(ip a  | grep 'eth1$' | awk '{print $2}' | sed 's?/.*??g')
+
 setenforce 0
 sed -i 's?SELINUX=.*?SELINUX=permissive?' /etc/selinux/config
-modprobe br_netfilter
+
+#modprobe br_netfilter
 swapoff -a
 sed -i '/swap/d' /etc/fstab
+
 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
 cat <<EOF > /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
@@ -21,12 +31,18 @@ repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
         https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOF
+
 yum clean all
-yum install -y yum-utils device-mapper-persistent-data lvm2 docker-ce kubelet kubeadm kubectl
+yum install -y vim yum-utils device-mapper-persistent-data lvm2 docker-ce kubelet kubeadm kubectl
+
+echo "Environment=\"KUBELET_EXTRA_ARGS=--node-ip=${ip}\"" >> /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
+systemctl daemon-reload
+
 for service in docker kubelet; do
   systemctl enable $service
   systemctl start $service
 done
+
 cat > /etc/docker/daemon.json <<EOF
 {
   "exec-opts": ["native.cgroupdriver=systemd"],
@@ -40,10 +56,23 @@ cat > /etc/docker/daemon.json <<EOF
   ]
 }
 EOF
-systemctl restart docker
+
 echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
-kubeadm init --apiserver-advertise-address=10.0.15.10 --pod-network-cidr=10.244.0.0/16
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+echo "@reboot echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables" >> /var/spool/cron/root
+
+systemctl restart docker
+if hostname | grep -q master; then
+  kubeadm init --apiserver-advertise-address=${ip} --pod-network-cidr=10.244.0.0/16 | grep -A1 '^kubeadm join' > /tmp/join_command
+  chown kube /tmp/join_command
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+  kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+else
+  sudo -u kube scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null master:/tmp/join_command /tmp
+  sh /tmp/join_command
+fi
+
+##
+kubectl create deployment ww --image=index.docker.io/botpress/server:v11_7_4
+kubectl create service nodeport ww --tcp=3001:3001
