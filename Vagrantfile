@@ -28,6 +28,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vm_config.vm.hostname = name
 #      config.vm.network "public_network", bridge: "Broadcom BCM5709C", adapter: "1", ip: VIRTUAL_MACHINES[name][:ip]
       vm_config.vm.network :private_network, ip: VIRTUAL_MACHINES[name][:ip]
+      config.vm.network "forwarded_port", guest: 3000, host: 8080
       config.vm.provider :virtualbox do |vb|
 
         vb.memory = 3072

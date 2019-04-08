@@ -88,3 +88,5 @@ kubectl create  -f /tmp/deployment_final
 kubectl create service nodeport botpress --tcp=3000
 kubectl patch svc botpress -p '{"spec": {"ports": [{"port": 3000,"nodePort": 31227,"name": "3000"}]}}'
 kubectl scale --replicas=2 deployment/botpress
+
+#for pod in $(kubectl get pods | awk '{print $1}' | grep -v '^NAME'); do kubectl describe pods $pod | grep '^Node:'; done
