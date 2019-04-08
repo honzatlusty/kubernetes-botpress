@@ -74,5 +74,17 @@ else
 fi
 
 ##
-kubectl create deployment ww --image=index.docker.io/botpress/server:v11_7_4
-kubectl create service nodeport ww --tcp=3001:3001
+kubectl create deployment botpress --image=index.docker.io/botpress/server:v11_7_4
+kubectl get deployment botpress  --export=true -o yaml > /tmp/depployment
+env_vars="        env:
+          - name: 'DATABASE'
+            value: 'postgres'
+          - name: 'DATABASE_URL'
+            value: 'postgres://botpress:botpass@207.154.207.148:5432/botpress'
+"
+echo "$(sed '/- image/q' deployment.bal; echo -n "$env_vars"; sed '1,/- image/d' deployment.bal)" > /tmp/deployment_final
+kubectl delete deployment botpress
+kubectl create  -f /tmp/deployment_final
+kubectl create service nodeport botpress --tcp=3000
+kubectl patch svc botpress -p '{"spec": {"ports": [{"port": 3000,"nodePort": 31227,"name": "3000"}]}}'
+kubectl scale --replicas=2 deployment/botpress
