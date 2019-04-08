@@ -8,12 +8,15 @@ VAGRANTFILE_API_VERSION = "2"
 VIRTUAL_MACHINES = {
   :kube01 => {
     :ip             => '10.0.15.21',
+    :port           => 8081,
   },
   :kube02 => {
     :ip             => '10.0.15.22',
+    :port           => 8082,
   },
   :master => {
     :ip             => '10.0.15.10',
+    :port           => 8080,
   }
 }
 
@@ -26,9 +29,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     config.vm.define name do |vm_config|
       vm_config.vm.hostname = name
-#      config.vm.network "public_network", bridge: "Broadcom BCM5709C", adapter: "1", ip: VIRTUAL_MACHINES[name][:ip]
       vm_config.vm.network :private_network, ip: VIRTUAL_MACHINES[name][:ip]
-      config.vm.network "forwarded_port", guest: 3000, host: 8080
+      config.vm.network "forwarded_port", guest: 31227, host: VIRTUAL_MACHINES[name][:port]
       config.vm.provider :virtualbox do |vb|
 
         vb.memory = 3072
