@@ -36,7 +36,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         vb.customize ["modifyvm", :id, "--ioapic", "on"]
       end # provider
     config.vm.provision "shell",
-        inline: ":"
+      path: "provision.sh"
     end
   end
 end
