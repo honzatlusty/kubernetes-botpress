@@ -63,7 +63,7 @@ systemctl restart docker
 if hostname | grep -q master; then
   kubeadm init --apiserver-advertise-address=${ip} --pod-network-cidr=10.244.0.0/16 | grep -A1 '^kubeadm join' > /tmp/join_command
   mkdir -p ~/.kube
-  sudo cp -i /etc/kubernetes/admin.conf ~/.kube/config
+  cp /etc/kubernetes/admin.conf ~/.kube/config
   kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
   kubectl create deployment botpress --image=index.docker.io/honzat/kubebot:v11_7_4
   kubectl patch deployment  botpress -p '{"spec":{"template":{"spec":{"containers":[{"name":"kubebot","env":[{"name":"DATABASE","value":"postgres"},{"name":"DATABASE_URL","value":"postgres://botpress:botpass@207.154.207.148:5432/botpress"}]}]}}}}'
@@ -72,7 +72,7 @@ if hostname | grep -q master; then
   kubectl scale --replicas=2 deployment/botpress
 else
   sudo -u kube scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null master:/tmp/join_command /tmp
-  sh /tmp/join_command
+  bash /tmp/join_command
 fi
 
 ##
