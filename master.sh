@@ -15,7 +15,6 @@ ip=$(ip a  | grep 'eth1$' | awk '{print $2}' | sed 's?/.*??g')
 setenforce 0
 sed -i 's?SELINUX=.*?SELINUX=permissive?' /etc/selinux/config
 
-#modprobe br_netfilter
 swapoff -a
 sed -i '/swap/d' /etc/fstab
 
@@ -63,12 +62,10 @@ echo "@reboot echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables" >> /var/s
 systemctl restart docker
 if hostname | grep -q master; then
   kubeadm init --apiserver-advertise-address=${ip} --pod-network-cidr=10.244.0.0/16 | grep -A1 '^kubeadm join' > /tmp/join_command
-  chown kube /tmp/join_command
-  mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+  mkdir -p ~/.kube
+  sudo cp -i /etc/kubernetes/admin.conf ~/.kube/config
   kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
-  kubectl create deployment botpress --image=index.docker.io/botpress/server:v11_7_4
+  kubectl create deployment botpress --image=index.docker.io/honzat/kubebot:v11_7_4
   kubectl get deployment botpress  --export=true -o yaml > /tmp/deployment
   env_vars="        env:
           - name: 'DATABASE'
