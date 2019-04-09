@@ -68,6 +68,7 @@ if hostname | grep -q master; then
   kubectl create deployment botpress --image=index.docker.io/honzat/kubebot:v11_7_4
   kubectl patch deployment  botpress -p '{"spec":{"template":{"spec":{"containers":[{"name":"kubebot","env":[{"name":"DATABASE","value":"postgres"},{"name":"DATABASE_URL","value":"postgres://botpress:botpass@207.154.207.148:5432/botpress"}]}]}}}}'
   kubectl create service nodeport botpress --tcp=3000
+  kubectl patch svc botpress -p '{"spec": {"sessionAffinity": "ClientIP"}}'
   kubectl patch svc botpress -p '{"spec": {"ports": [{"port": 3000,"nodePort": 31227,"name": "3000"}]}}'
   kubectl scale --replicas=2 deployment/botpress
 else
