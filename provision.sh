@@ -74,7 +74,3 @@ else
   sudo -u kube scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null master:/tmp/join_command /tmp
   bash /tmp/join_command
 fi
-
-##
-#kubectl exec -it shell-demo -- /bin/bash
-#for pod in $(kubectl get pods | awk '{print $1}' | grep -v '^NAME'); do kubectl describe pods $pod | grep '^Node:'; done
