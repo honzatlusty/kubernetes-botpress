@@ -8,15 +8,15 @@ VAGRANTFILE_API_VERSION = "2"
 VIRTUAL_MACHINES = {
   :kube01 => {
     :ip             => '10.0.15.21',
-    :port           => 8081,
+    :port           => 3001,
   },
   :kube02 => {
     :ip             => '10.0.15.22',
-    :port           => 8082,
+    :port           => 3002,
   },
   :master => {
     :ip             => '10.0.15.10',
-    :port           => 8080,
+    :port           => 3000,
   }
 }
 
